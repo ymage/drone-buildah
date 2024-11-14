@@ -7,7 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 
-	docker "github.com/drone-plugins/drone-buildah"
+	buildah "github.com/ymage/drone-buildah"
 )
 
 var (
@@ -183,6 +183,21 @@ func main() {
 			EnvVar: "PLUGIN_ADD_HOST",
 		},
 		cli.StringFlag{
+			Name:   "secret",
+			Usage:  "secret key value pair eg id=MYSECRET",
+			EnvVar: "PLUGIN_SECRET",
+		},
+		cli.StringSliceFlag{
+			Name:   "secrets-from-env",
+			Usage:  "secret key value pair eg secret_name=secret",
+			EnvVar: "PLUGIN_SECRETS_FROM_ENV",
+		},
+		cli.StringSliceFlag{
+			Name:   "secrets-from-file",
+			Usage:  "secret key value pairs eg secret_name=/path/to/secret",
+			EnvVar: "PLUGIN_SECRETS_FROM_FILE",
+		},
+		cli.StringFlag{
 			Name:   "s3-local-cache-dir",
 			Usage:  "local directory for S3 based cache",
 			EnvVar: "PLUGIN_S3_LOCAL_CACHE_DIR",
@@ -230,17 +245,17 @@ func main() {
 }
 
 func run(c *cli.Context) error {
-	plugin := docker.Plugin{
+	plugin := buildah.Plugin{
 		Dryrun:  c.Bool("dry-run"),
 		Cleanup: c.BoolT("docker.purge"),
-		Login: docker.Login{
+		Login: buildah.Login{
 			Registry: c.String("docker.registry"),
 			Username: c.String("docker.username"),
 			Password: c.String("docker.password"),
 			Email:    c.String("docker.email"),
 			Config:   c.String("docker.config"),
 		},
-		Build: docker.Build{
+		Build: buildah.Build{
 			Remote:      c.String("remote.url"),
 			Name:        c.String("commit.sha"),
 			Dockerfile:  c.String("dockerfile"),
@@ -259,6 +274,9 @@ func run(c *cli.Context) error {
 			AutoLabel:   c.BoolT("auto-label"),
 			Link:        c.String("link"),
 			NoCache:     c.Bool("no-cache"),
+			Secret:      c.String("secret"),
+			SecretEnvs:  c.StringSlice("secrets-from-env"),
+			SecretFiles: c.StringSlice("secrets-from-file"),
 			AddHost:     c.StringSlice("add-host"),
 			Quiet:       c.Bool("quiet"),
 			S3CacheDir:  c.String("s3-local-cache-dir"),
@@ -273,11 +291,11 @@ func run(c *cli.Context) error {
 	}
 
 	if c.Bool("tags.auto") {
-		if docker.UseDefaultTag( // return true if tag event or default branch
+		if buildah.UseDefaultTag( // return true if tag event or default branch
 			c.String("commit.ref"),
 			c.String("repo.branch"),
 		) {
-			tag, err := docker.DefaultTagSuffix(
+			tag, err := buildah.DefaultTagSuffix(
 				c.String("commit.ref"),
 				c.String("tags.suffix"),
 			)

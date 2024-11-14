@@ -28,7 +28,7 @@ RUN cd /root/buildah/src/github.com/containers/buildah && make && sudo make inst
 
 
 
-FROM quay.io/buildah/stable:v1.23.0
+FROM quay.io/buildah/stable:v1.37.5
 
 USER build
 WORKDIR /home/build
@@ -36,6 +36,6 @@ RUN export STORAGE_DRIVER=vfs
 COPY --from=0 /root/buildah/src/github.com/containers/buildah/bin/. /bin/
 
 # Add plugin binary
-ADD release/linux/amd64/drone-docker /bin/
-ADD release/linux/amd64/drone-ecr /bin/
-ENTRYPOINT ["/bin/drone-ecr"]
+ADD release/linux/amd64/buildah-docker /bin/
+ADD release/linux/amd64/buildah-ecr /bin/
+ENTRYPOINT ["/bin/buildah-ecr"]

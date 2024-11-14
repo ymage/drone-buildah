@@ -1,6 +1,6 @@
 # Source for dockerfile:
 # https://github.com/containers/buildah/blob/master/docs/tutorials/05-openshift-rootless-bud.md
-FROM quay.io/buildah/stable:v1.14.8
+FROM quay.io/buildah/stable:v1.37.5
 
 RUN touch /etc/subgid /etc/subuid \
  && chmod g=u /etc/subgid /etc/subuid /etc/passwd \
@@ -18,6 +18,6 @@ USER build
 WORKDIR /home/build
 
 # Add plugin binary
-ADD release/linux/amd64/drone-docker /bin/
-ADD release/linux/amd64/drone-acr /bin/
-ENTRYPOINT ["/bin/drone-acr"]
+ADD release/linux/amd64/buildah-docker /bin/
+ADD release/linux/amd64/buildah-acr /bin/
+ENTRYPOINT ["/bin/buildah-acr"]

@@ -1,4 +1,4 @@
-FROM quay.io/buildah/stable:v1.36.0
+FROM quay.io/buildah/stable:v1.37.5
 
 # Set up the working directory
 USER build
@@ -6,7 +6,7 @@ WORKDIR /home/build
 RUN export STORAGE_DRIVER=vfs
 
 # Add the plugin binary
-ADD release/linux/amd64/drone-docker /bin/
+ADD release/linux/amd64/buildah-docker /bin/
 
 # Set the entrypoint to the plugin binary
-ENTRYPOINT ["/bin/drone-docker"]
+ENTRYPOINT ["/bin/buildah-docker"]

@@ -16,11 +16,11 @@ const buildahExe = "buildah"
 type (
 	// Login defines Docker login parameters.
 	Login struct {
-		Registry string // Docker registry address
-		Username string // Docker registry username
-		Password string // Docker registry password
-		Email    string // Docker registry email
-		Config   string // Docker Auth Config
+		Registry    string // Docker registry address
+		Username    string // Docker registry username
+		Password    string // Docker registry password
+		Email       string // Docker registry email
+		Config      string // Docker Auth Config
 	}
 
 	// Build defines Docker build parameters.
@@ -43,6 +43,7 @@ type (
 		Labels      []string // Label map
 		Link        string   // Git repo link
 		NoCache     bool     // Docker build no-cache
+		SecretEnvs  []string // Docker build secrets with env var as source
 		AddHost     []string // Docker build add-host
 		Quiet       bool     // Docker build quiet
 		S3CacheDir  string
@@ -226,6 +227,13 @@ func commandBuild(build Build) *exec.Cmd {
 	for _, host := range build.AddHost {
 		args = append(args, "--add-host", host)
 	}
+	if len(build.SecretEnvs) > 0 {
+		for _, secret := range build.SecretEnvs {
+			if arg, err := getSecretStringCmdArg(secret); err == nil {
+				args = append(args, "--secret", arg)
+			}
+		}
+	}
 	if build.Target != "" {
 		args = append(args, "--target", build.Target)
 	}
@@ -284,6 +292,34 @@ func commandBuild(build Build) *exec.Cmd {
 	args = append(args, "-t", build.Name)
 	args = append(args, build.Context)
 	return exec.Command(buildahExe, args...)
+}
+
+func getSecretStringCmdArg(kvp string) (string, error) {
+	return getSecretCmdArg(kvp, false)
+}
+
+func getSecretFileCmdArg(kvp string) (string, error) {
+	return getSecretCmdArg(kvp, true)
+}
+
+func getSecretCmdArg(kvp string, file bool) (string, error) {
+	delimIndex := strings.IndexByte(kvp, '=')
+	if delimIndex == -1 {
+		return "", fmt.Errorf("%s is not a valid secret", kvp)
+	}
+
+	key := kvp[:delimIndex]
+	value := kvp[delimIndex+1:]
+
+	if key == "" || value == "" {
+		return "", fmt.Errorf("%s is not a valid secret", kvp)
+	}
+
+	if file {
+		return fmt.Sprintf("id=%s,src=%s", key, value), nil
+	}
+
+	return fmt.Sprintf("id=%s,env=%s", key, value), nil
 }
 
 // helper function to add proxy values from the environment
